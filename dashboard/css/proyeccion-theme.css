@@ -679,7 +679,7 @@ select:focus{
   .story-hero{
     min-height:100svh;
     height:auto;
-    padding:120px 20px 180px;
+    padding:180px 20px 180px;
     overflow:visible;
     border:0;
   }
