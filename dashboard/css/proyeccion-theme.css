@@ -677,7 +677,7 @@ select:focus{
 @media(max-width:600px){
 
   .story-hero{
-    min-height:100svh;
+    min-height:120svh;
     height:auto;
     padding:80px 20px 70px;
     overflow:visible;
