@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dashboard | Proyección Consultores</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Metropolis:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="icon" type="image/png" href="/media/favicon.png">
+
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/proyeccion-theme.css">
+  <link rel="stylesheet" href="css/filters-ui.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+  <!-- LOGO -->
+  <div class="side-logo">
+    <img src="/media/logodash.png" alt="Proyección Consultores">
+  </div>
+
+<!-- HERO -->
+<section class="story-hero" id="inicio">
+  <div class="story-container story-hero-inner">
+    <p class="eyebrow">Encuestas que anticipan escenarios</p>
+    <h1>¿Qué piensan hoy<br>los Argentinos?</h1>
+    <p class="hero-lead">
+      Una experiencia interactiva para explorar cómo cambian las percepciones
+      sociales según cada combinación de variables.
+    </p>
+    <a href="#datos" class="scroll-link">
+    <div class="scroll-indicator">⌄</div>
+    </a>
+  </div>
+</section>
+
+<!-- DATOS QUE CUENTAN HISTORIAS -->
+<section id="datos" class="story-block">
+  <div class="story-container story-centered">
+    <p class="eyebrow">Datos que cuentan historias</p>
+    <h2>Cada combinación revela una realidad distinta.</h2>
+    <p>
+      No hay una sola lectura de la opinión pública. Cruzá segmentos y observá cómo cambian las preocupaciones,
+      percepciones económicas, evaluaciones e intención de voto.
+    </p>
+    <div class="story-stats">
+      <div class="story-stat">
+        <strong data-count="120000">120.000+</strong>
+        <span>Casos procesados</span>
+      </div>
+      <div class="story-stat">
+        <strong data-count="24">24</strong>
+        <span>Provincias relevadas</span>
+      </div>
+      <div class="story-stat">
+        <strong data-count="100">100+</strong>
+        <span>Municipios alcanzados</span>
+      </div>
+      <div class="story-stat">
+        <strong data-count="200">200+</strong>
+        <span>Escenarios posibles</span>
+      </div>
+    </div>
+    <a href="#cta" class="scroll-link">
+    <div class="scroll-indicator">⌄</div>
+    </a>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta" class="scenario-banner">
+  <div class="story-container">
+    <h2>Construí tu propio escenario</h2>
+    <p>
+      Seleccioná filtros, explorá resultados y descubrí patrones
+      en tiempo real.
+    </p>
+    <a href="#laboratorio" class="story-btn">
+      Ir al laboratorio
+    </a>
+    <div class="scroll-indicator">⌄</div>
+  </div>
+</section>
+
+  <!-- LABORATORIO -->
+  <section class="lab-section" id="laboratorio">
+    <button class="filters-floating-toggle" type="button" id="filtersToggle">
+        <span>Explorar escenario</span>
+        <strong>Filtros</strong>
+    </button>
+    <div class="app">
+
+      <header class="topbar">
+        <div class="brand">
+          <div class="logo">📊</div>
+          <div>
+            <div class="title">Dashboard Encuesta</div>
+            <div class="subtitle" id="status">Conectando con backend...</div>
+          </div>
+        </div>
+
+        <div class="right"></div>
+      </header>
+
+      <section class="filters">
+        <div class="filters-row" id="datasetRow"></div>
+        <div class="filters-row" id="filtersRow"></div>
+
+        <div class="filters-actions">
+          <button class="btn ghost" onclick="clearFilters()">Limpiar</button>
+        </div>
+
+        <div class="bases" id="bases"></div>
+      </section>
+
+      <nav class="tabs">
+        <button class="tab active" data-tab="overview" onclick="showTab('overview')">
+          Principales Preocupaciones
+        </button>
+
+        <button class="tab" data-tab="economia" onclick="showTab('economia')">
+          Economía
+        </button>
+
+        <button class="tab" data-tab="evaluacion" onclick="showTab('evaluacion')">
+          Evaluación de Gobierno
+        </button>
+
+        <button class="tab" data-tab="imagen" onclick="showTab('imagen')">
+          Imagen Presidencial
+        </button>
+
+        <button class="tab" data-tab="voto" onclick="showTab('voto')">
+          Elecciones Hoy
+        </button>
+
+        <div class="chart-active-filters" id="chartActiveFilters"></div>
+      </nav>
+
+      <main class="content">
+
+        <section class="panel" id="tab-overview">
+          <div class="panel-head">
+            <h2></h2>
+          </div>
+
+          <div class="kpi-grid" id="kpiGrid"></div>
+        </section>
+
+        <section class="panel hidden" id="tab-economia">
+          <div class="panel-head">
+            <h2></h2>
+          </div>
+
+          <div class="metric-card ipe-card">
+            <div class="ipe-title">Índice de Percepción Económica</div>
+            <div id="ipeValue" class="ipe-value">--</div>
+
+            <div class="ipe-meter">
+              <div class="ipe-bar">
+                <div id="ipePointer" class="ipe-pointer"></div>
+              </div>
+
+              <div class="ipe-scale">
+                <span>1</span>
+                <span>2</span>
+                <span>3</span>
+                <span>4</span>
+              </div>
+
+              <div class="ipe-zones">
+                <span>Pesimismo<br>(≤1.95)</span>
+                <span>Estancamiento<br>(1.96-2.4)</span>
+                <span>Estabilidad<br>(2.25-2.49)</span>
+                <span>Optimismo<br>(≥2.5)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="charts-grid">
+            <div class="chart-card">
+              <h3>¿Su situación económica familiar mejoró, empeoró o se mantuvo igual?</h3>
+              <canvas id="chartSiteco"></canvas>
+            </div>
+
+            <div class="chart-card">
+              <h3>¿Cómo cree que va a estar su situación económica familiar dentro de seis meses?</h3>
+              <canvas id="chartSiteco6"></canvas>
+            </div>
+
+            <div class="chart-card">
+              <h3>¿Tuvieron que pedir dinero prestado para cubrir los gastos de su hogar?</h3>
+              <canvas id="chartPrestamos"></canvas>
+            </div>
+
+            <div class="chart-card">
+              <h3>¿Cómo considera el rumbo del país?</h3>
+              <canvas id="chartRumbo"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel hidden" id="tab-evaluacion">
+          <div class="panel-head">
+            <h2></h2>
+          </div>
+
+          <div class="metric-card icg-card icg-meter">
+            <div class="ipe-title">Índice de Confianza Pública</div>
+            <div id="icgValue" class="ipe-value">--</div>
+
+            <div class="ipe-meter">
+              <div class="ipe-bar">
+                <div id="icgPointer" class="ipe-pointer"></div>
+              </div>
+
+              <div class="ipe-scale">
+                <span>1</span>
+                <span>2</span>
+                <span>3</span>
+                <span>4</span>
+              </div>
+
+              <div class="ipe-zones">
+                <span>Desconfianza<br>(1–1.89)</span>
+                <span>Confianza moderada<br>(1.9–2.19)</span>
+                <span>Confianza estable<br>(2.2–2.49)</span>
+                <span>Confianza alta<br>(≥2.5)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="charts-grid evaluacion-grid">
+            <div class="chart-card evagob-card">
+              <h3>¿CÓMO EVALÚA EL TRABAJO DEL GOBIERNO NACIONAL?</h3>
+              <canvas id="chartEvagob"></canvas>
+            </div>
+
+            <div class="chart-card capacidad-card">
+              <h3>¿EN QUÉ MEDIDA EL GOBIERNO NACIONAL TIENE CAPACIDAD PARA RESOLVER LOS PROBLEMAS DEL PAÍS?</h3>
+              <canvas id="chartCapacidad"></canvas>
+            </div>
+
+            <div class="chart-card impacto-card">
+              <h3>¿DIRÍA QUE LAS POLÍTICAS DEL GOBIERNO NACIONAL HAN TENIDO UN IMPACTO MÁS BIEN POSITIVO O NEGATIVO EN SU SITUACIÓN PERSONAL O FAMILIAR?</h3>
+              <canvas id="chartImpacto"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel hidden" id="tab-imagen">
+          <div class="panel-head">
+            <h2></h2>
+          </div>
+
+          <div class="charts-grid one">
+            <div class="chart-card">
+              <canvas id="chartComparacionImagen"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel hidden" id="tab-voto">
+          <div class="panel-head">
+            <h2></h2>
+          </div>
+
+          <div class="charts-grid one">
+            <div class="chart-card">
+              <h3>¿Si hoy hubiera elecciones nacionales a qué espacio elegiría?</h3>
+              <canvas id="chartElecciones"></canvas>
+            </div>
+
+            <div class="chart-card">
+              <h3>¿En una escala ideológica, dónde se ubica?</h3>
+              <canvas id="chartIdeologia"></canvas>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+    </div>
+
+  </section>
+
+<script src="js/app.js"></script>
+<script src="js/filters-ui.js"></script>
+<script src="js/floating-filters.js"></script>
+
+</body>
+</html>
