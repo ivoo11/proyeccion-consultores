@@ -23,7 +23,7 @@ const FILTER_LABELS = {
 
 /* URL base del backend local */
 /*const API = "http://localhost:3000";*/
-const API = "https://api.proyeccionconsultores.com.ar";
+const API = "https://proyeccion-consultores.onrender.com";
 
 /* ===============================
    ESTADO GLOBAL DEL DASHBOARD
