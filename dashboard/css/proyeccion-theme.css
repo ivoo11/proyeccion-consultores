@@ -679,7 +679,7 @@ select:focus{
   .story-hero{
     min-height:100svh;
     height:auto;
-    padding:80px 20px 70px;
+    padding:1200px 20px 180px;
     overflow:visible;
     border:0;
   }
@@ -798,12 +798,8 @@ select:focus{
     gap:14px;
   }
 
-
-
   .story-hero .eyebrow{
-
     margin-top:120px;
-
   }
 }
 
