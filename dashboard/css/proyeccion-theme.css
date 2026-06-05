@@ -797,6 +797,14 @@ select:focus{
     grid-template-columns:1fr;
     gap:14px;
   }
+
+
+
+  .story-hero .eyebrow{
+
+    margin-top:40px;
+
+  }
 }
 
 @media(min-width:1800px){
