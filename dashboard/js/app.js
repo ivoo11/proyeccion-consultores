@@ -1225,7 +1225,29 @@ async function loadMeta(){
     const select=document.createElement("select");
     select.className="filter-box";
     select.id="flt-"+f;
-    select.onchange=()=>loadData();
+    select.onchange=()=>{
+
+      /* Mantener un solo filtro global activo */
+      for(const otherFilter of meta.globalFilters){
+        const otherSelect = el("flt-" + otherFilter);
+
+        if(otherSelect && otherSelect !== select){
+          otherSelect.value = "";
+        }
+      }
+
+      /* Quitar filtros aplicados desde los gráficos */
+      clearChartFilters();
+
+      /* Sincronizar visualmente los pills */
+      document
+        .querySelectorAll(".filters select")
+        .forEach(otherSelect => {
+          otherSelect.dataset.pcSignature = "";
+        });
+
+      loadData();
+    };
 
     select.innerHTML=`<option value="">Todos</option>`;
 
