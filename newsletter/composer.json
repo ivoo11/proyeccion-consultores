@@ -1,0 +1,7 @@
+{
+  "name": "proyeccion/newsletter",
+  "description": "Newsletter mensual de Proyección Consultores",
+  "type": "project",
+  "require": {"php": ">=8.2", "ext-pdo_sqlite": "*", "ext-fileinfo": "*", "phpmailer/phpmailer": "^6.10", "phpoffice/phpspreadsheet": "^5.0"},
+  "config": {"platform": {"php": "8.2.0"}, "sort-packages": true}
+}
