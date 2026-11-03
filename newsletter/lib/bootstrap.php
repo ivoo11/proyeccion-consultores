@@ -1,7 +1,8 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/core.php';
-$configPath = getenv('NEWSLETTER_CONFIG') ?: __DIR__ . '/../config.local.php';
+require_once __DIR__ . '/paths.php';
+$configPath = newsletterConfigPath();
 if (!is_file($configPath)) {
     http_response_code(503);
     exit('Newsletter pendiente de configuración.');

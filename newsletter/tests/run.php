@@ -2,6 +2,10 @@
 declare(strict_types=1);
 require __DIR__.'/../vendor/autoload.php';
 require __DIR__.'/../lib/core.php';
+require __DIR__.'/../lib/paths.php';
+check(hostingerPrivateDirectory('/home/example/domains/proyeccionconsultores.com.ar/.builds/release-123/newsletter/lib') === '/home/example/domains/proyeccionconsultores.com.ar/newsletter-private', 'configuration persists across Hostinger releases');
+check(hostingerPrivateDirectory('/home/example/domains/proyeccionconsultores.com.ar/public_html/newsletter/lib') === '/home/example/domains/proyeccionconsultores.com.ar/newsletter-private', 'stable directory for direct public_html deployment');
+check(hostingerPrivateDirectory('/tmp/local/newsletter/lib') === null, 'local projects do not infer production paths');
 require __DIR__.'/../lib/import.php';
 require __DIR__.'/../lib/sending.php';
 function check(bool $ok, string $label): void { if (!$ok) throw new RuntimeException('FAIL: '.$label); echo "OK: $label\n"; }
