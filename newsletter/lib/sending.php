@@ -28,7 +28,9 @@ function processQueue(PDO $db, array $cfg, ?array $testCampaign = null, ?callabl
     $sent = 0;
     try {
         if ($testCampaign) {
+            $expectedVersion = draftVersion($testCampaign);
             $testCampaign = campaign($db, $testCampaign['id']);
+            if (!hash_equals($expectedVersion, draftVersion($testCampaign))) throw new RuntimeException('El borrador cambió. Recargá la página antes de enviar la prueba.');
             if ($testCampaign['state'] !== 'draft') throw new RuntimeException('La prueba solo se puede enviar desde un borrador.');
         }
         query($db, "UPDATE recipients SET state='unknown' WHERE state='sending'");
