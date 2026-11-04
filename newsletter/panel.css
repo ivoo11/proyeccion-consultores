@@ -11,3 +11,7 @@
 @media(max-width:480px){.recipient-summary{grid-template-columns:1fr}.recipient-summary .compact{grid-column:1;grid-row:auto;justify-self:start;margin-top:5px}.pdf-tools .field-title{flex-basis:100%}.pdf-tools .button-row{width:100%}.send-actions{grid-template-columns:1fr}.send-actions .send-form:last-child{text-align:left}.campaign-editor>.card{padding:18px}.preview iframe{min-height:720px}}
 
 .save-row{margin:8px 0 12px;min-height:18px}.save-row .muted{font-size:11px}
+
+/* Match the editor height while showing the email at a smaller preview scale. */
+.campaign-editor{align-items:stretch}.campaign-editor>.preview{display:flex;flex-direction:column;min-height:0}.preview-viewport{position:relative;flex:1;min-height:0;overflow:hidden;border-radius:6px;background:#edf0f2}.preview .preview-viewport iframe{position:absolute;top:0;left:0;width:117.647059%;height:117.647059%;min-height:0;transform:scale(.85);transform-origin:top left;display:block;border-radius:0}.preview h2{flex:none;margin-bottom:14px}
+@media(max-width:800px){.preview-viewport{flex:auto;height:570px}.campaign-editor>.preview{min-height:0}}
