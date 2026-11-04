@@ -58,13 +58,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $c = campaign($db, (string)($_POST['id'] ?? ''));
         if ($action === 'edit') {
             saveDraft($db, $cfg, $c, $_POST, $_FILES);
-            $_SESSION['notice']='Cambios guardados. Enviá una prueba para revisar esta versión.';
+            $_SESSION['notice']='Cambios guardados.';
         } elseif ($action === 'test') {
             if ($c['state'] !== 'draft') throw new RuntimeException('La prueba se realiza antes de poner la campaña en cola.');
             if (!hash_equals(draftVersion($c), (string)($_POST['version'] ?? ''))) throw new RuntimeException('El borrador cambió en otra pestaña. Recargá la página.');
             processQueue($db, $cfg, $c); $_SESSION['notice'] = 'Prueba aceptada por Hostinger. Revisá la casilla ' . $cfg['test_email'] . ' antes de confirmar el envío.';
         } elseif ($action === 'queue') {
-            if (!$cfg['sending_enabled'] || !$c['tested'] || $c['state'] !== 'draft' || !hash_equals(draftVersion($c), (string)($_POST['version'] ?? '')) || !(int)query($db, "SELECT COUNT(*) FROM recipients WHERE campaign=? AND state='pending'", [$c['id']])->fetchColumn()) throw new RuntimeException('Guardá los cambios y enviá una prueba antes de confirmar el envío.');
+            if (!$cfg['sending_enabled'] || $c['state'] !== 'draft' || !hash_equals(draftVersion($c), (string)($_POST['version'] ?? '')) || !(int)query($db, "SELECT COUNT(*) FROM recipients WHERE campaign=? AND state='pending'", [$c['id']])->fetchColumn()) throw new RuntimeException('No se puede confirmar el envío. Revisá que el borrador esté guardado y tenga contactos disponibles.');
             query($db, "UPDATE campaigns SET state='queued' WHERE id=? AND state='draft'", [$c['id']]);
             $_SESSION['notice'] = 'Campaña en cola. Se procesará automáticamente con el cupo disponible.';
         } elseif ($action === 'pause') {
@@ -81,7 +81,7 @@ $selected = null;
 if ($logged && isset($_GET['id'])) { try { $selected = campaign($db, (string)$_GET['id']); } catch (Throwable $e) { $error = 'Campaña inexistente.'; } }
 $labels = ['draft'=>'Borrador','queued'=>'En cola','paused'=>'Pausada','completed'=>'Completada','review'=>'Requiere revisión','pending'=>'Pendientes','accepted'=>'Aceptados por Hostinger','suppressed'=>'Dados de baja','unknown'=>'Sin confirmación','sending'=>'En proceso'];
 function hidden(string $action, string $id = ''): void { echo '<input type="hidden" name="csrf" value="'.h($_SESSION['csrf']).'"><input type="hidden" name="action" value="'.h($action).'"><input type="hidden" name="id" value="'.h($id).'">'; }
-?><!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Newsletter · Proyección Consultores</title><link rel="icon" type="image/png" href="../dashboard/media/favicon.png"><link rel="stylesheet" href="panel.css?v=20261104-1"><script src="panel.js?v=20261104-1" defer></script></head><body>
+?><!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Newsletter · Proyección Consultores</title><link rel="icon" type="image/png" href="../dashboard/media/favicon.png"><link rel="stylesheet" href="panel.css?v=20261104-2"><script src="panel.js?v=20261104-1" defer></script></head><body>
 <header><a href="./"><img src="../assets/img/navbrand.png" width="190" alt="Proyección Consultores"></a><span>NEWSLETTER MENSUAL</span><?php if ($logged): ?><form method="post"><?php hidden('logout'); ?><button class="secondary">Salir</button></form><?php endif ?></header>
 <main><?php if ($error): ?><div role="alert" class="alert error"><?= h($error) ?></div><?php endif ?><?php if ($notice): ?><div role="status" class="alert"><?= h($notice) ?></div><?php endif ?>
 <?php if (!$logged): ?><section class="login card"><p class="eyebrow">ACCESO PRIVADO</p><h1>Informes que conectan.</h1><p class="muted">Ingresá para preparar y enviar el newsletter de Proyección.</p><form method="post"><?php hidden('login'); ?><label>Usuario<input name="user" autocomplete="username" required></label><label>Contraseña<input type="password" name="password" autocomplete="current-password" required></label><button>Ingresar al panel</button></form></section>
@@ -132,8 +132,8 @@ function hidden(string $action, string $id = ''): void { echo '<input type="hidd
 <?php if($c['state']==='draft'): ?><div id="pdf-editor" hidden><label>Nuevo PDF<input type="file" name="pdf" accept=".pdf"><small>PDF · hasta 15 MB</small></label></div><?php endif ?></div>
 <?php if($c['state']==='draft'): ?>
 <div class="save-row"><button class="secondary" id="save-draft">Guardar cambios</button><span class="muted" id="save-status" role="status">Cambios guardados</span></div></form>
-<div class="send-actions"><form method="post" class="send-form"><?php hidden('test',$c['id']); ?><input type="hidden" name="version" value="<?= h(draftVersion($c)) ?>"><button class="secondary" <?= !$cfg['sending_enabled']?'disabled':'' ?>>Enviar prueba a mi correo</button><small><?= h($cfg['test_email']) ?></small></form>
-<form method="post" class="send-form"><?php hidden('queue',$c['id']); ?><input type="hidden" name="version" value="<?= h(draftVersion($c)) ?>"><button <?= !$c['tested'] || !$cfg['sending_enabled'] || empty($counts['pending'])?'disabled':'' ?>>Confirmar envío a <?= (int)($counts['pending']??0) ?> contactos</button><?php if(!$c['tested']): ?><small>Enviá una prueba para habilitar el envío.</small><?php endif ?></form></div>
+<div class="send-actions"><form method="post" class="send-form"><?php hidden('test',$c['id']); ?><input type="hidden" name="version" value="<?= h(draftVersion($c)) ?>"><button class="secondary" <?= !$cfg['sending_enabled']?'disabled':'' ?>>Enviar prueba</button><small><?= h($cfg['test_email']) ?></small></form>
+<form method="post" class="send-form"><?php hidden('queue',$c['id']); ?><input type="hidden" name="version" value="<?= h(draftVersion($c)) ?>"><button <?= !$cfg['sending_enabled'] || empty($counts['pending'])?'disabled':'' ?>>Enviar a <?= (int)($counts['pending']??0) ?> contactos</button></form></div>
 <?php elseif(in_array($c['state'],['queued','paused'],true)): ?><form method="post"><?php hidden($c['state']==='queued'?'pause':'resume',$c['id']); ?><button class="secondary"><?= $c['state']==='queued'?'Pausar próximos envíos':'Continuar pendientes' ?></button></form><?php endif ?>
 <?php if (!empty($counts['unknown'])): ?><div class="alert warning">Hay <?= (int)$counts['unknown'] ?> correos sin confirmación. Revisá su estado en Hostinger antes de continuar.</div><?php endif ?>
 </section><section class="card preview"><h2>Vista previa del email</h2><iframe title="Vista previa del newsletter" sandbox src="preview.php?id=<?= h($c['id']) ?>"></iframe></section></div>
