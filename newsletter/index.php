@@ -86,11 +86,10 @@ function hidden(string $action, string $id = ''): void { echo '<input type="hidd
 <header><a href="./"><img src="../assets/img/navbrand.png" width="190" alt="Proyección Consultores"></a><span>NEWSLETTER MENSUAL</span><?php if ($logged): ?><form method="post"><?php hidden('logout'); ?><button class="secondary">Salir</button></form><?php endif ?></header>
 <main><?php if ($error): ?><div role="alert" class="alert error"><?= h($error) ?></div><?php endif ?><?php if ($notice): ?><div role="status" class="alert"><?= h($notice) ?></div><?php endif ?>
 <?php if (!$logged): ?><section class="login card"><p class="eyebrow">ACCESO PRIVADO</p><h1>Informes que conectan.</h1><p class="muted">Ingresá para preparar y enviar el newsletter de Proyección.</p><form method="post"><?php hidden('login'); ?><label>Usuario<input name="user" autocomplete="username" required></label><label>Contraseña<input type="password" name="password" autocomplete="current-password" required></label><button>Ingresar al panel →</button></form></section>
-<?php else: ?><div class="heading"><div><p class="eyebrow">COMUNICACIÓN / PROYECCIÓN</p><h1>Newsletter mensual</h1><p class="muted">Un informe, una lista de contactos y todo listo para compartir.</p></div><div class="heading-meta"><p class="quota"><strong><?= remaining($db,$cfg) ?></strong> envíos disponibles</p><?php if ($selected): ?><a href="./">← Volver al inicio</a><?php endif ?></div></div>
+<?php else: ?><div class="heading"><div><h1>Newsletter mensual</h1></div><div class="heading-meta"><p class="quota"><strong><?= remaining($db,$cfg) ?></strong> envíos disponibles</p><?php if ($selected): ?><a href="./">← Volver al inicio</a><?php endif ?></div></div>
 <?php $heartbeat = (int)query($db,"SELECT value FROM metadata WHERE key='worker_seen'")->fetchColumn(); if ($heartbeat < time()-900): ?><div class="alert warning">El proceso automático todavía no está activo o no se ejecutó en los últimos 15 minutos. Las campañas quedarán pendientes hasta configurar o revisar la tarea programada en Hostinger.</div><?php endif ?>
 <?php if (!$selected): ?>
 <section class="card compose">
-  <p class="eyebrow">01 / PREPARAR</p>
   <h2>Nuevo informe</h2>
   <form method="post" enctype="multipart/form-data">
     <?php hidden('create'); ?>
@@ -104,7 +103,7 @@ function hidden(string $action, string $id = ''): void { echo '<input type="hidd
         <label>Informe mensual<input name="pdf" type="file" accept=".pdf" required><small>PDF · hasta 15 MB<br>Se comparte mediante un enlace</small></label>
       </div>
     </div>
-    <div class="compose-actions"><button>Revisar contactos y vista previa →</button></div>
+    <div class="compose-actions"><button>Revisar contactos y vista previa</button></div>
   </form>
 </section>
 <?php else: $c=$selected; $report=json_decode($c['report'],true); $counts=[]; foreach(query($db,'SELECT state,COUNT(*) n FROM recipients WHERE campaign=? GROUP BY state',[$c['id']]) as $r) $counts[$r['state']]=$r['n']; ?>
