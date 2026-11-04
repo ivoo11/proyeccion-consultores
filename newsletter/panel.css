@@ -15,3 +15,5 @@
 /* Match the editor height while showing the email at a smaller preview scale. */
 .campaign-editor{align-items:stretch}.campaign-editor>.preview{display:flex;flex-direction:column;min-height:0}.preview-viewport{position:relative;flex:1;min-height:0;overflow:hidden;border-radius:6px;background:#edf0f2}.preview .preview-viewport iframe{position:absolute;top:0;left:0;width:117.647059%;height:117.647059%;min-height:0;transform:scale(.85);transform-origin:top left;display:block;border-radius:0}.preview h2{flex:none;margin-bottom:14px}
 @media(max-width:800px){.preview-viewport{flex:auto;height:570px}.campaign-editor>.preview{min-height:0}}
+
+.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.history td:last-child{text-align:right}.delete-draft button{font-size:12px;padding:8px 11px;white-space:nowrap}

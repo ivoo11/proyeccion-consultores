@@ -1,3 +1,6 @@
+document.addEventListener('submit', event => {
+  if (event.target.matches('.delete-draft') && !window.confirm('¿Eliminar este borrador?')) event.preventDefault();
+});
 'use strict';
 const editor = document.querySelector('#draft-editor');
 const campaignPanel = document.querySelector('[data-campaign]');
@@ -59,7 +62,13 @@ if (editor) {
         const date = document.createElement('td'); date.textContent = result.created;
         const title = document.createElement('td'); const link = document.createElement('a'); link.href = '?id=' + result.id; title.append(link);
         const state = document.createElement('td'); state.textContent = 'Borrador';
-        row.append(date, title, state); history.prepend(row);
+        const actions = document.createElement('td');
+        const remove = document.createElement('form'); remove.method = 'post'; remove.className = 'delete-draft';
+        for (const [name,value] of Object.entries({action:'delete',id:result.id,csrf:editor.elements.csrf.value})) {
+          const input=document.createElement('input'); input.type='hidden'; input.name=name; input.value=value; remove.append(input);
+        }
+        const button=document.createElement('button'); button.className='secondary compact'; button.textContent='Eliminar borrador'; remove.append(button); actions.append(remove);
+        row.append(date, title, state, actions); history.prepend(row);
       }
       document.querySelectorAll('.history a').forEach(link => {
         if (new URL(link.href).searchParams.get('id') === campaignPanel.dataset.campaign) link.textContent = result.subject || 'Informe sin título';

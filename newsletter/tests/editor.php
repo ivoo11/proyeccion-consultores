@@ -27,3 +27,14 @@ check($partial['subject']==='Solo asunto' && $partial['body']==='' && $partial['
 check(!draftReady($partial,['data_dir'=>'/tmp/nonexistent-newsletter-test']),'incomplete draft cannot be sent');
 saveDraft($db,[],$partial,['version'=>draftVersion($partial),'subject'=>'Solo asunto','body'=>'','contacts_mode'=>'text','emails'=>'uno@example.invalid'],[]);
 check((int)query($db,'SELECT COUNT(*) FROM recipients WHERE campaign=?',['new-empty'])->fetchColumn()===1,'contacts can be added before PDF and message');
+
+$toDelete=campaign($db,'new-empty');
+query($db,"INSERT INTO attempts(campaign,email,created,state,test) VALUES (?,?,?,'accepted',1)",['new-empty','test@example.invalid',time()]);
+check(canDeleteDraft($db,$toDelete),'draft with only a test send can be removed');
+deleteDraft($db,$toDelete);
+check(query($db,"SELECT state FROM campaigns WHERE id='new-empty'")->fetchColumn()==='deleted','draft removed from active campaigns');
+check((int)query($db,"SELECT COUNT(*) FROM attempts WHERE campaign='new-empty'")->fetchColumn()===1,'deletion preserves sending quota records');
+try { campaign($db,'new-empty'); throw new LogicException('deleted draft accessible'); } catch(RuntimeException $e) { check(true,'deleted draft inaccessible through campaign lookup'); }
+check(!canDeleteDraft($db,campaign($db,'edit')),'queued campaign cannot be deleted');
+$empty=emptyDraft('never-created');
+try { saveDraft($db,[],$empty,['version'=>draftVersion($empty),'subject'=>'','body'=>''],[]); throw new LogicException('empty draft created'); } catch(RuntimeException $e) { check(!(bool)query($db,"SELECT 1 FROM campaigns WHERE id='never-created'")->fetchColumn(),'empty draft is not created'); }

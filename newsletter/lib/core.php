@@ -19,7 +19,7 @@ function csrf(): void { if (!hash_equals($_SESSION['csrf'], (string)($_POST['csr
 function authed(): bool { return isset($_SESSION['login']) && time() - $_SESSION['login'] < 3600; }
 function token(string $email, array $cfg): string { return hash_hmac('sha256', strtolower($email), $cfg['secret']); }
 function unsubscribeUrl(string $email, array $cfg): string { return $cfg['base_url'] . '/unsubscribe.php?' . http_build_query(['email' => $email, 'token' => token($email, $cfg)]); }
-function campaign(PDO $db, string $id): array { $c = query($db, 'SELECT * FROM campaigns WHERE id=?', [$id])->fetch(); if (!$c) { throw new RuntimeException('Campaña inexistente.'); } return $c; }
+function campaign(PDO $db, string $id): array { $c = query($db, "SELECT * FROM campaigns WHERE id=? AND state!='deleted'", [$id])->fetch(); if (!$c) { throw new RuntimeException('Campaña inexistente.'); } return $c; }
 function emailHtml(array $c, array $cfg, string $email = ''): string {
     $site = preg_replace('~/newsletter/?$~', '', $cfg['base_url']);
     $pdf = $cfg['base_url'] . '/pdf.php?id=' . rawurlencode($c['id']);

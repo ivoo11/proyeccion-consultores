@@ -30,6 +30,7 @@ function saveDraft(PDO $db, array $cfg, array $c, array $input, array $files): v
         if(strtolower(pathinfo($pdf['name'],PATHINFO_EXTENSION))!=='pdf' || (new finfo(FILEINFO_MIME_TYPE))->file($pdf['tmp_name'])!=='application/pdf' || file_get_contents($pdf['tmp_name'],false,null,0,5)!=='%PDF-') throw new RuntimeException('El informe debe ser un PDF válido.');
         $filename=$c['id'].'-'.bin2hex(random_bytes(8)).'.pdf';
     }
+    if (!empty($c['_new']) && $subject==='' && $body==='' && !$pdf && $result===null) throw new RuntimeException('Escribí o cargá un archivo para empezar el borrador.');
     $db->beginTransaction();
     try {
         if (!empty($c['_new'])) query($db,'INSERT INTO campaigns(id,subject,body,pdf,created,report) VALUES (?,?,?,?,?,?)',[$c['id'],'','','',time(),'{}']);
@@ -57,4 +58,15 @@ function saveDraft(PDO $db, array $cfg, array $c, array $input, array $files): v
         throw $e;
     }
     if($c['pdf']!=='' && $filename!==$c['pdf']) @unlink($cfg['data_dir'].'/pdf/'.$c['pdf']);
+}
+
+function canDeleteDraft(PDO $db, array $c): bool {
+    return $c['state']==='draft'
+        && !(int)query($db,"SELECT COUNT(*) FROM recipients WHERE campaign=? AND state NOT IN ('pending','suppressed')",[$c['id']])->fetchColumn()
+        && !(int)query($db,'SELECT COUNT(*) FROM attempts WHERE campaign=? AND test=0',[$c['id']])->fetchColumn();
+}
+function deleteDraft(PDO $db, array $c): void {
+    if (!canDeleteDraft($db,$c)) throw new RuntimeException('Solo se pueden eliminar borradores sin envíos iniciados.');
+    // Keep attempts for the rolling quota and retain data without exposing it in the panel.
+    query($db,"UPDATE campaigns SET state='deleted' WHERE id=? AND state='draft'",[$c['id']]);
 }
