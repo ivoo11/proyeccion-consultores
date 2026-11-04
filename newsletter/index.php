@@ -58,6 +58,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $c = campaign($db, (string)($_POST['id'] ?? ''));
         if ($action === 'edit') {
             saveDraft($db, $cfg, $c, $_POST, $_FILES);
+            if (($_POST['autosave']??'')==='1') {
+                $saved=campaign($db,$c['id']);
+                header('Content-Type: application/json');
+                echo json_encode(['subject'=>$saved['subject'],'version'=>draftVersion($saved),'pending'=>(int)query($db,"SELECT COUNT(*) FROM recipients WHERE campaign=? AND state='pending'",[$c['id']])->fetchColumn(),'report'=>json_decode($saved['report'],true),'emails'=>query($db,'SELECT email FROM recipients WHERE campaign=? ORDER BY email',[$c['id']])->fetchAll(PDO::FETCH_COLUMN),'enabled'=>(bool)$cfg['sending_enabled']]);
+                exit;
+            }
             $_SESSION['notice']='Cambios guardados.';
         } elseif ($action === 'test') {
             if ($c['state'] !== 'draft') throw new RuntimeException('La prueba se realiza antes de poner la campaña en cola.');
@@ -73,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             query($db, "UPDATE campaigns SET state='queued' WHERE id=? AND state='paused'", [$c['id']]);
         }
         header('Location: ?id=' . $c['id']); exit;
-    } catch (Throwable $e) { $error = $e instanceof RuntimeException ? $e->getMessage() : 'No se pudo completar la operación. Revisá la configuración y los archivos.'; }
+    } catch (Throwable $e) { $error = $e instanceof RuntimeException ? $e->getMessage() : 'No se pudo completar la operación. Revisá la configuración y los archivos.'; if (($_POST['autosave']??'')==='1') { http_response_code(422); header('Content-Type: application/json'); echo json_encode(['error'=>$error]); exit; } }
 }
 $logged = authed();
 if ($logged) $_SESSION['login'] = time();
@@ -81,7 +87,7 @@ $selected = null;
 if ($logged && isset($_GET['id'])) { try { $selected = campaign($db, (string)$_GET['id']); } catch (Throwable $e) { $error = 'Campaña inexistente.'; } }
 $labels = ['draft'=>'Borrador','queued'=>'En cola','paused'=>'Pausada','completed'=>'Completada','review'=>'Requiere revisión','pending'=>'Pendientes','accepted'=>'Aceptados por Hostinger','suppressed'=>'Dados de baja','unknown'=>'Sin confirmación','sending'=>'En proceso'];
 function hidden(string $action, string $id = ''): void { echo '<input type="hidden" name="csrf" value="'.h($_SESSION['csrf']).'"><input type="hidden" name="action" value="'.h($action).'"><input type="hidden" name="id" value="'.h($id).'">'; }
-?><!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Newsletter · Proyección Consultores</title><link rel="icon" type="image/png" href="../dashboard/media/favicon.png"><link rel="stylesheet" href="panel.css?v=20261104-2"><script src="panel.js?v=20261104-1" defer></script></head><body>
+?><!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Newsletter · Proyección Consultores</title><link rel="icon" type="image/png" href="../dashboard/media/favicon.png"><link rel="stylesheet" href="panel.css?v=20261104-3"><script src="panel.js?v=20261104-3" defer></script></head><body>
 <header><a href="./"><img src="../assets/img/navbrand.png" width="190" alt="Proyección Consultores"></a><span>NEWSLETTER MENSUAL</span><?php if ($logged): ?><form method="post"><?php hidden('logout'); ?><button class="secondary">Salir</button></form><?php endif ?></header>
 <main><?php if ($error): ?><div role="alert" class="alert error"><?= h($error) ?></div><?php endif ?><?php if ($notice): ?><div role="status" class="alert"><?= h($notice) ?></div><?php endif ?>
 <?php if (!$logged): ?><section class="login card"><p class="eyebrow">ACCESO PRIVADO</p><h1>Informes que conectan.</h1><p class="muted">Ingresá para preparar y enviar el newsletter de Proyección.</p><form method="post"><?php hidden('login'); ?><label>Usuario<input name="user" autocomplete="username" required></label><label>Contraseña<input type="password" name="password" autocomplete="current-password" required></label><button>Ingresar al panel</button></form></section>
@@ -120,7 +126,7 @@ function hidden(string $action, string $id = ''): void { echo '<input type="hidd
 <?php if($c['state']!=='draft'): ?><div class="import-stats"><?php foreach($counts as $state=>$n): if($state==='pending')continue; ?><span><?= (int)$n ?> <?= h($labels[$state]) ?></span><?php endforeach ?></div><?php endif ?>
 <?php if($c['state']==='draft'): ?><button type="button" class="secondary compact" data-toggle="contacts-editor" aria-expanded="false">Editar contactos</button><?php endif ?>
 </div>
-<?php if($report['invalid']??[]): ?><details><summary>Ver correos inválidos</summary><ul><?php foreach(array_slice($report['invalid'],0,100) as $bad): ?><li>Fila <?= (int)$bad['row'] ?>: <?= h($bad['value']) ?></li><?php endforeach ?></ul></details><?php endif ?>
+<div id="import-errors"><?php if($report['invalid']??[]): ?><details><summary>Ver correos inválidos</summary><ul><?php foreach(array_slice($report['invalid'],0,100) as $bad): ?><li>Fila <?= (int)$bad['row'] ?>: <?= h($bad['value']) ?></li><?php endforeach ?></ul></details><?php endif ?></div>
 <?php if($c['state']==='draft'): ?>
 <div id="contacts-editor" hidden class="edit-block">
 <label>Reemplazar listado<input type="file" name="contacts" accept=".xlsx,.csv"><small>XLSX o CSV · hasta 5 MB</small></label>
@@ -131,7 +137,7 @@ function hidden(string $action, string $id = ''): void { echo '<input type="hidd
 <div class="pdf-tools"><span class="field-title">Informe mensual</span><div class="button-row"><a class="button secondary" href="pdf.php?id=<?= h($c['id']) ?>" target="_blank" rel="noopener">Ver PDF cargado</a><?php if($c['state']==='draft'): ?><button type="button" class="secondary" data-toggle="pdf-editor" aria-expanded="false">Cambiar PDF</button><?php endif ?></div>
 <?php if($c['state']==='draft'): ?><div id="pdf-editor" hidden><label>Nuevo PDF<input type="file" name="pdf" accept=".pdf"><small>PDF · hasta 15 MB</small></label></div><?php endif ?></div>
 <?php if($c['state']==='draft'): ?>
-<div class="save-row"><button class="secondary" id="save-draft">Guardar cambios</button><span class="muted" id="save-status" role="status">Cambios guardados</span></div></form>
+<div class="save-row"><span class="muted" id="save-status" role="status">Guardado</span></div></form>
 <div class="send-actions"><form method="post" class="send-form"><?php hidden('test',$c['id']); ?><input type="hidden" name="version" value="<?= h(draftVersion($c)) ?>"><button class="secondary" <?= !$cfg['sending_enabled']?'disabled':'' ?>>Enviar prueba</button><small><?= h($cfg['test_email']) ?></small></form>
 <form method="post" class="send-form"><?php hidden('queue',$c['id']); ?><input type="hidden" name="version" value="<?= h(draftVersion($c)) ?>"><button <?= !$cfg['sending_enabled'] || empty($counts['pending'])?'disabled':'' ?>>Enviar a <?= (int)($counts['pending']??0) ?> contactos</button></form></div>
 <?php elseif(in_array($c['state'],['queued','paused'],true)): ?><form method="post"><?php hidden($c['state']==='queued'?'pause':'resume',$c['id']); ?><button class="secondary"><?= $c['state']==='queued'?'Pausar próximos envíos':'Continuar pendientes' ?></button></form><?php endif ?>
