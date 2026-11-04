@@ -62,7 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $c=emptyDraft($requestedId);
         }
         if ($action === 'delete') {
-            deleteDraft($db,$c); $_SESSION['notice']='Borrador eliminado.'; header('Location: ./'); exit;
+            deleteDraft($db,$c);
+            if (($_POST['ajax']??'')==='1') { header('Content-Type: application/json'); echo json_encode(['message'=>'Borrador eliminado.']); exit; }
+            $_SESSION['notice']='Borrador eliminado.'; header('Location: ./'); exit;
         } elseif ($action === 'edit') {
             saveDraft($db, $cfg, $c, $_POST, $_FILES);
             if (($_POST['autosave']??'')==='1') {
@@ -87,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             query($db, "UPDATE campaigns SET state='queued' WHERE id=? AND state='paused'", [$c['id']]);
         }
         header('Location: ?id=' . $c['id']); exit;
-    } catch (Throwable $e) { $error = $e instanceof RuntimeException ? $e->getMessage() : 'No se pudo completar la operación. Revisá la configuración y los archivos.'; if (($_POST['autosave']??'')==='1') { http_response_code(422); header('Content-Type: application/json'); echo json_encode(['error'=>$error]); exit; } }
+    } catch (Throwable $e) { $error = $e instanceof RuntimeException ? $e->getMessage() : 'No se pudo completar la operación. Revisá la configuración y los archivos.'; if (($_POST['autosave']??'')==='1' || ($_POST['ajax']??'')==='1') { http_response_code(422); header('Content-Type: application/json'); echo json_encode(['error'=>$error]); exit; } }
 }
 $logged = authed();
 if ($logged) $_SESSION['login'] = time();
@@ -95,9 +97,9 @@ $selected = null;
 if ($logged && isset($_GET['id'])) { try { $selected = campaign($db, (string)$_GET['id']); } catch (Throwable $e) { $error = 'Campaña inexistente.'; } }
 $labels = ['draft'=>'Borrador','queued'=>'En cola','paused'=>'Pausada','completed'=>'Completada','review'=>'Requiere revisión','pending'=>'Pendientes','accepted'=>'Aceptados por Hostinger','suppressed'=>'Dados de baja','unknown'=>'Sin confirmación','sending'=>'En proceso'];
 function hidden(string $action, string $id = ''): void { echo '<input type="hidden" name="csrf" value="'.h($_SESSION['csrf']).'"><input type="hidden" name="action" value="'.h($action).'"><input type="hidden" name="id" value="'.h($id).'">'; }
-?><!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Newsletter · Proyección Consultores</title><link rel="icon" type="image/png" href="../dashboard/media/favicon.png"><link rel="stylesheet" href="panel.css?v=20261104-6"><script src="panel.js?v=20261104-6" defer></script></head><body>
+?><!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Newsletter · Proyección Consultores</title><link rel="icon" type="image/png" href="../dashboard/media/favicon.png"><link rel="stylesheet" href="panel.css?v=20261104-7"><script src="panel.js?v=20261104-7" defer></script></head><body>
 <header><a href="./"><img src="../assets/img/navbrand.png" width="190" alt="Proyección Consultores"></a><?php if ($logged): ?><form method="post"><?php hidden('logout'); ?><button class="secondary">Salir</button></form><?php endif ?></header>
-<main><?php if ($error): ?><div role="alert" class="alert error"><?= h($error) ?></div><?php endif ?><?php if ($notice): ?><div role="status" class="alert"><?= h($notice) ?></div><?php endif ?>
+<main><?php if ($error): ?><div role="alert" class="alert error"><?= h($error) ?></div><?php endif ?><?php if ($notice): ?><div role="status" class="toast"><?= h($notice) ?></div><?php endif ?>
 <?php if (!$logged): ?><section class="login card"><p class="eyebrow">ACCESO PRIVADO</p><h1>Informes que conectan.</h1><p class="muted">Ingresá para preparar y enviar el newsletter de Proyección.</p><form method="post"><?php hidden('login'); ?><label>Usuario<input name="user" autocomplete="username" required></label><label>Contraseña<input type="password" name="password" autocomplete="current-password" required></label><button>Ingresar al panel</button></form></section>
 <?php else: ?><div class="heading"><div><h1>Newsletter mensual</h1></div><div class="heading-meta"><p class="quota"><strong><?= remaining($db,$cfg) ?></strong> envíos disponibles</p></div></div>
 <?php $heartbeat = (int)query($db,"SELECT value FROM metadata WHERE key='worker_seen'")->fetchColumn(); if ($heartbeat < time()-900): ?><div class="alert warning">El proceso automático todavía no está activo o no se ejecutó en los últimos 15 minutos. Las campañas quedarán pendientes hasta configurar o revisar la tarea programada en Hostinger.</div><?php endif ?>

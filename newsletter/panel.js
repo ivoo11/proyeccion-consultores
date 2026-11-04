@@ -1,7 +1,38 @@
-document.addEventListener('submit', event => {
-  if (event.target.matches('.delete-draft') && !window.confirm('¿Eliminar este borrador?')) event.preventDefault();
+ 'use strict';
+function showToast(message, error = false) {
+  document.querySelectorAll('.toast').forEach(node => node.remove());
+  const toast = document.createElement('div');
+  toast.className = error ? 'toast toast-error' : 'toast';
+  toast.setAttribute('role', error ? 'alert' : 'status');
+  const text = document.createElement('span'); text.textContent = message;
+  const close = document.createElement('button'); close.type = 'button'; close.textContent = '×'; close.setAttribute('aria-label', 'Cerrar notificación');
+  close.addEventListener('click', () => toast.remove());
+  toast.append(text, close); document.body.append(toast);
+  setTimeout(() => toast.remove(), error ? 10000 : 5000);
+}
+const initialToast = document.querySelector('.toast');
+if (initialToast) showToast(initialToast.textContent);
+document.addEventListener('submit', async event => {
+  const form = event.target;
+  if (!form.matches('.delete-draft')) return;
+  event.preventDefault();
+  const selected = document.querySelector('[data-campaign]')?.dataset.campaign === form.elements.id.value;
+  if (selected && document.querySelector('#draft-editor')?.dataset.unsaved === 'true') {
+    showToast('Esperá a que terminen de guardarse los cambios.', true); return;
+  }
+  if (!window.confirm('¿Eliminar este borrador?')) return;
+  const button = form.querySelector('button'); button.disabled = true;
+  const data = new FormData(form); data.set('ajax', '1');
+  try {
+    const response = await fetch(window.location.href, {method:'POST', body:data});
+    let result;
+    try { result = await response.json(); } catch (_) { throw Error('No se pudo confirmar la eliminación. Recargá la página para revisar el estado.'); }
+    if (!response.ok) throw Error(result.error || 'No se pudo eliminar el borrador.');
+    form.closest('tr').remove();
+    if (selected) document.dispatchEvent(new Event('draft-deleted'));
+    showToast(result.message);
+  } catch (error) { showToast(error.message, true); button.disabled = false; }
 });
-'use strict';
 const editor = document.querySelector('#draft-editor');
 const campaignPanel = document.querySelector('[data-campaign]');
 for (const button of document.querySelectorAll('[data-toggle]')) {
@@ -26,8 +57,13 @@ if (editor) {
   let sendingEnabled = campaignPanel.dataset.enabled === '1';
   let ready = campaignPanel.dataset.ready === '1';
   let pending = Number(document.querySelector('.recipient-total strong').textContent);
-  const updateButtons = () => sendButtons.forEach((button, i) => {
+  const updateButtons = () => { editor.dataset.unsaved = String(dirty || saving); sendButtons.forEach((button, i) => {
     button.disabled = dirty || saving || !ready || !sendingEnabled || (i === 1 && pending === 0);
+  }); };
+  document.addEventListener('draft-deleted', () => {
+    clearTimeout(timer); dirty = false; ready = false;
+    editor.querySelectorAll('input,textarea,button').forEach(control => { control.disabled = true; });
+    status.textContent = 'Borrador eliminado'; updateButtons();
   });
   const save = async () => {
     clearTimeout(timer);
