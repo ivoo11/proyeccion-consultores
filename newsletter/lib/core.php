@@ -38,3 +38,10 @@ function suppress(PDO $db, string $email): void {
 function draftVersion(array $c): string {
     return hash('sha256', json_encode([$c['subject'], $c['body'], $c['pdf'], $c['report']]));
 }
+
+function emptyDraft(string $id): array {
+    return ['id'=>$id,'subject'=>'','body'=>'','pdf'=>'','created'=>time(),'state'=>'draft','report'=>'{}','tested'=>0,'_new'=>true];
+}
+function draftReady(array $c, array $cfg): bool {
+    return trim($c['subject'])!=='' && trim($c['body'])!=='' && $c['pdf']!=='' && is_file($cfg['data_dir'].'/pdf/'.$c['pdf']);
+}

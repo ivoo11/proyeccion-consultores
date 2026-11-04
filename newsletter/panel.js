@@ -20,10 +20,11 @@ if (editor) {
   let emailGeneration = 0;
   let timer;
   const sendButtons = [...document.querySelectorAll('.send-form button')];
-  let sendingEnabled = !sendButtons[0].disabled;
+  let sendingEnabled = campaignPanel.dataset.enabled === '1';
+  let ready = campaignPanel.dataset.ready === '1';
   let pending = Number(document.querySelector('.recipient-total strong').textContent);
   const updateButtons = () => sendButtons.forEach((button, i) => {
-    button.disabled = dirty || saving || !sendingEnabled || (i === 1 && pending === 0);
+    button.disabled = dirty || saving || !ready || !sendingEnabled || (i === 1 && pending === 0);
   });
   const save = async () => {
     clearTimeout(timer);
@@ -52,9 +53,22 @@ if (editor) {
         editor.elements.emails.value = result.emails.join('\n');
         editor.elements.contacts_mode.value = '';
       }
+      const history = document.querySelector('.history tbody');
+      if (![...history.querySelectorAll('a')].some(link => new URL(link.href).searchParams.get('id') === result.id)) {
+        const row = document.createElement('tr');
+        const date = document.createElement('td'); date.textContent = result.created;
+        const title = document.createElement('td'); const link = document.createElement('a'); link.href = '?id=' + result.id; title.append(link);
+        const state = document.createElement('td'); state.textContent = 'Borrador';
+        row.append(date, title, state); history.prepend(row);
+      }
       document.querySelectorAll('.history a').forEach(link => {
-        if (new URL(link.href).searchParams.get('id') === campaignPanel.dataset.campaign) link.textContent = result.subject;
+        if (new URL(link.href).searchParams.get('id') === campaignPanel.dataset.campaign) link.textContent = result.subject || 'Informe sin título';
       });
+      ready = result.ready;
+      window.history.replaceState(null, '', '?id=' + encodeURIComponent(result.id));
+      document.querySelector('#loaded-pdf').hidden = !result.pdf;
+      document.querySelector('[data-toggle="pdf-editor"]').textContent = result.pdf ? 'Cambiar PDF' : 'Cargar PDF';
+      document.querySelector('[data-toggle="contacts-editor"]').textContent = result.emails.length ? 'Editar contactos' : 'Cargar contactos';
       pending = result.pending;
       sendingEnabled = result.enabled;
       document.querySelector('.recipient-total strong').textContent = pending;
@@ -88,10 +102,10 @@ if (editor) {
   const render = () => {
     if (!template) return;
     const doc = new DOMParser().parseFromString(template, 'text/html');
-    doc.querySelector('[data-preview-subject]').textContent = subject.value;
+    doc.querySelector('[data-preview-subject]').textContent = subject.value || 'Asunto del informe';
     const text = doc.querySelector('[data-preview-body]');
     text.replaceChildren();
-    body.value.split('\n').forEach((line, i) => {
+    (body.value || 'El mensaje de tu newsletter aparecerá acá.').split('\n').forEach((line, i) => {
       if (i) text.append(doc.createElement('br'));
       text.append(doc.createTextNode(line));
     });

@@ -5,7 +5,7 @@ function saveDraft(PDO $db, array $cfg, array $c, array $input, array $files): v
     if ($c['state'] !== 'draft') throw new RuntimeException('Solo se pueden editar borradores.');
     if (!hash_equals(draftVersion($c), (string)($input['version']??''))) throw new RuntimeException('El borrador cambió en otra pestaña. Recargá la página antes de guardar.');
     $subject=trim((string)($input['subject']??'')); $body=trim((string)($input['body']??''));
-    if (!$subject || mb_strlen($subject)>160 || preg_match('/[\r\n]/',$subject) || !$body || mb_strlen($body)>12000) throw new RuntimeException('Revisá el asunto y el mensaje.');
+    if (mb_strlen($subject)>160 || preg_match('/[\r\n]/',$subject) || mb_strlen($body)>12000) throw new RuntimeException('Revisá el asunto y el mensaje.');
     $result=null; $pdf=null; $filename=$c['pdf'];
     if (($files['contacts']['error']??UPLOAD_ERR_NO_FILE)!==UPLOAD_ERR_NO_FILE) {
         $file=upload('contacts',5*1024*1024);
@@ -23,7 +23,7 @@ function saveDraft(PDO $db, array $cfg, array $c, array $input, array $files): v
             if(isset($seen[$email])) { $result['duplicates']++; continue; }
             $seen[$email]=true; $result['emails'][]=$email;
         }
-        if(!$result['emails']) throw new RuntimeException('Agregá al menos un mail válido.');
+
     }
     if (($files['pdf']['error']??UPLOAD_ERR_NO_FILE)!==UPLOAD_ERR_NO_FILE) {
         $pdf=upload('pdf',15*1024*1024);
@@ -32,6 +32,7 @@ function saveDraft(PDO $db, array $cfg, array $c, array $input, array $files): v
     }
     $db->beginTransaction();
     try {
+        if (!empty($c['_new'])) query($db,'INSERT INTO campaigns(id,subject,body,pdf,created,report) VALUES (?,?,?,?,?,?)',[$c['id'],'','','',time(),'{}']);
         $report=$c['report'];
         if($result!==null) {
             query($db,'DELETE FROM recipients WHERE campaign=?',[$c['id']]);
@@ -55,5 +56,5 @@ function saveDraft(PDO $db, array $cfg, array $c, array $input, array $files): v
         if($filename!==$c['pdf']) @unlink($cfg['data_dir'].'/pdf/'.$filename);
         throw $e;
     }
-    if($filename!==$c['pdf']) @unlink($cfg['data_dir'].'/pdf/'.$c['pdf']);
+    if($c['pdf']!=='' && $filename!==$c['pdf']) @unlink($cfg['data_dir'].'/pdf/'.$c['pdf']);
 }
