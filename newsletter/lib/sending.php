@@ -10,7 +10,7 @@ function sendSmtp(array $c, string $email, array $cfg, bool $test): void {
     $mail->setFrom($cfg['from_email'], $cfg['from_name']); $mail->addAddress($email);
     $mail->isHTML(true); $mail->Subject = ($test ? '[PRUEBA] ' : '') . $c['subject'];
     $mail->Body = emailHtml($c, $cfg, $email);
-    $mail->AltBody = $c['subject'] . "\n\n" . $c['body'] . "\n\nVer informe: " . $cfg['base_url'] . '/pdf.php?id=' . $c['id'] . "\n\nDarse de baja: " . unsubscribeUrl($email, $cfg);
+    $mail->AltBody = $c['subject'] . "\n\n" . $c['body'] . "\n\nVer informe: " . $cfg['base_url'] . '/pdf.php?id=' . $c['id'] . "\n\nDescargar PDF: " . $cfg['base_url'] . '/pdf.php?id=' . $c['id'] . '&download=1' . "\n\nDarse de baja: " . unsubscribeUrl($email, $cfg);
     $mail->addCustomHeader('List-Unsubscribe', '<' . unsubscribeUrl($email, $cfg) . '>');
     $mail->addCustomHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
     $mail->send();
